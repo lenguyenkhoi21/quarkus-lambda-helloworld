@@ -1,0 +1,63 @@
+  AWSTemplateFormatVersion: '2010-09-09'
+  Transform: AWS::Serverless-2016-10-31
+  Description: AWS Serverless Quarkus - quarkus-amazon-lambda-common-deployment
+  Globals:
+    Api:
+      EndpointConfiguration: REGIONAL
+      BinaryMediaTypes:
+        - "*/*"
+
+  Resources:
+    RestAPI:
+      Type: AWS::Serverless::Api
+      Properties:
+        StageName: test
+        DefinitionBody:
+          openapi: 3.0.1
+          info:
+            title: Hello QuarkusLamdaFunction
+            description:
+            termsOfService: http://swagger.io/terms/
+            contact:
+              email: lenguyenkhoi21@gmail.com
+            license:
+              name: Apache 2.0
+              url: http://www.apache.org/licenses/LICENSE-2.0.html
+            version: 1.0.0
+          paths:
+            /greetinglamda:
+              post:
+              requestBody:
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Person'
+                required: true
+              responses:
+                200:
+                  content:
+                    schema:
+                      type: string
+          components:
+            schemas:
+              Person:
+                type: object
+                properties:
+                  name:
+                    type: string
+    QuarkusLambdaHelloworld:
+      Type: AWS::Serverless::Function
+      Properties:
+        Handler: io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest
+        Runtime: java11
+        CodeUri: function.zip
+        MemorySize: 256
+        Timeout: 15
+        Policies: AWSLambdaBasicExecutionRole
+        Events:
+          PostEndpoint:
+            Type: Api
+            Properties:
+              RestApiId: !Ref RestAPI
+              Path: "/{proxy+}"
+              Method: ANY
